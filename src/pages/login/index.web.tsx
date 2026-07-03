@@ -201,7 +201,7 @@ const Login: React.FC = () => {
                       {dominio.clientName}
                     </option>
                   ))}
-                {/* @ts-ignore */}
+                  {/* @ts-ignore */}
                 </select>
               </View>
               <View>
@@ -230,7 +230,7 @@ const Login: React.FC = () => {
                       {srv.subDomain}
                     </option>
                   ))}
-                {/* @ts-ignore */}
+                  {/* @ts-ignore */}
                 </select>
               </View>
             </Card>

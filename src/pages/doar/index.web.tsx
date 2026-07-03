@@ -53,9 +53,8 @@ import {
 
 const formatSorteioTitle = (data?: SorteioData) => {
   if (data)
-    return `${data.tipo_rodada?.split(' ')[0]} #${data.codigo} - ${moment(data.data_partida).format('L - LT')} - ${
-      data.valor_keno
-    }`;
+    return `${data.tipo_rodada?.split(' ')[0]} #${data.codigo} - ${moment(data.data_partida).format('L - LT')} - ${data.valor_keno
+      }`;
   else return '';
 };
 
@@ -91,10 +90,10 @@ const Doar: React.FC = () => {
   }, 1000);
   const userInfo = useMemo(
     () =>
-      ({
-        ...user,
-        ...deviceInfo
-      } as IUser & DeviceInfo),
+    ({
+      ...user,
+      ...deviceInfo
+    } as IUser & DeviceInfo),
     [deviceInfo, user]
   );
   const sorteioSelecionado = useMemo(() => {
@@ -543,18 +542,18 @@ const Doar: React.FC = () => {
                   {formatSorteioTitle(sorteio)}
                 </option>
               ))}
-            {/* @ts-ignore */}
+              {/* @ts-ignore */}
             </select>
             <Text style={campoTempo}>
               <Text style={textCronometro}>Sorteio Começa em: </Text>
               <Text style={cronometroReverso}>
                 {sorteios.length > 0 && selSortIndex != undefined && selSortIndex >= 0
                   ? timerSort(
-                      new Date(sorteios[selSortIndex || 0].data_partida),
-                      new Date(sorteios[selSortIndex || 0].datahora),
-                      count,
-                      true
-                    )
+                    new Date(sorteios[selSortIndex || 0].data_partida),
+                    new Date(sorteios[selSortIndex || 0].datahora),
+                    count,
+                    true
+                  )
                   : ''}
               </Text>
             </Text>
