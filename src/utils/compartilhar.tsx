@@ -1,6 +1,12 @@
 import moment from "moment";
 import { getPreServer } from "../services/api";
 
+const formatarCartelasParaTexto = (cartelas: Cartela[]) => {
+  return cartelas.map(c => 
+    `CARTELA: ${c.codigo}\n${c.linha1_lista.map(n => n.toString().padStart(2, '0')).join(' - ')}\n${c.linha2_lista.map(n => n.toString().padStart(2, '0')).join(' - ')}\n${c.linha3_lista.map(n => n.toString().padStart(2, '0')).join(' - ')}`
+  ).join('\n------------------------------------------------------\n');
+}
+
 export const compartilharMsg = (bilhete : IBilhete,userInfo:IUser & DeviceInfo,version:string) => {
     return `LOCAL:
 *${bilhete.cartelas[0].estabelecimento}*
@@ -24,8 +30,7 @@ VALOR DOADO:
 SEQUENCIA DE:
 *${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*
 ------------------------------------------------------
-Acesse o link para acompanhar o jogo
-https://${userInfo?.url_qrcode}/?bilhete=${bilhete.bilhete}`;
+${formatarCartelasParaTexto(bilhete.cartelas)}`;
 }
 
 export const compartilharMsgNovamente = (bilhete : IBilhete,userInfo:IUser & DeviceInfo,version:string) => {
@@ -53,8 +58,7 @@ VALOR DOADO:
 SEQUENCIA DE:
 *${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*
 ------------------------------------------------------
-Acesse o link para acompanhar o jogo
-https://${userInfo?.url_qrcode}/?bilhete=${bilhete.bilhete}`;
+${formatarCartelasParaTexto(bilhete.cartelas)}`;
 }
  
 export const compartilharPreMsg = (lote : IBilheteLote,userInfo:IUser & DeviceInfo,version:string) => {
@@ -73,7 +77,9 @@ VALOR CARTELA: ${bilhete.valor_cartela}
 VALOR BILHETE: ${(bilhete.valor_cartela * bilhete.cartelas.length).toFixed(2)}
 ------------------------------------------------------
 *SEQUÊNCIA DE:*
-*${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*`
+*${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*
+------------------------------------------------------
+${formatarCartelasParaTexto(bilhete.cartelas)}`
     })
     let bilhetes_invalidos_str = ''
     if(lote.bilhetes_invalidos.length > 0){
@@ -92,13 +98,7 @@ VALOR PULE: ${lote.valor_doado}
 QTD DE BILHETES: ${lote.bilhetes.length}
 PULE: ${lote.codigo}
 EMISSÃO: ${moment().format('L LTS')}
-${bilhetes_str}
-------------------------------------------------------
-${bilhetes_invalidos_str}
-------------------------------------------------------
-Acesse o Link para acompanhar o jogo
-------------------------------------------------------
-https://${userInfo?.url_qrcode}/?pule=${lote.codigo}`
+${bilhetes_str}${bilhetes_invalidos_str ? `\n------------------------------------------------------\n${bilhetes_invalidos_str}` : ''}`;
 }
 
 export const compartilharPreMsgNovamente = (lote : IBilheteLote,userInfo:IUser & DeviceInfo,version:string) => {
@@ -116,7 +116,9 @@ VALOR CARTELA: ${bilhete.valor_cartela}
 VALOR BILHETE: ${(bilhete.valor_cartela * bilhete.cartelas.length).toFixed(2)}
 ------------------------------------------------------
 *SEQUÊNCIA DE:*
-*${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*`
+*${bilhete.cartelas[0]?.codigo} a ${bilhete.cartelas?.[bilhete.cartelas?.length - 1]?.codigo}*
+------------------------------------------------------
+${formatarCartelasParaTexto(bilhete.cartelas)}`
   })
   let bilhetes_invalidos_str = ''
   if(lote.bilhetes_invalidos.length > 0){
@@ -137,13 +139,7 @@ VALOR PULE: ${lote.valor_doado}
 QTD DE BILHETES: ${lote.bilhetes.length}
 PULE: ${lote.codigo}
 EMISSÃO: ${moment().format('L LTS')}
-${bilhetes_str}
-------------------------------------------------------
-${bilhetes_invalidos_str}
-------------------------------------------------------
-Acesse o Link para acompanhar o jogo
-------------------------------------------------------
-https://${userInfo?.url_qrcode}/?pule=${lote.codigo}`
+${bilhetes_str}${bilhetes_invalidos_str ? `\n------------------------------------------------------\n${bilhetes_invalidos_str}` : ''}`;
 }
 
 export const compartilharReciboMsg = (Operacao: Operacao) => {

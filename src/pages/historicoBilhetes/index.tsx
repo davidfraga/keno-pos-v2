@@ -8,7 +8,7 @@ import { useAuth } from '../../context/auth/auth';
 import Header from '../../components/Header';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, RefreshControl, Share, View } from 'react-native';
+import { Alert, Modal, RefreshControl, Share, TouchableOpacity, View } from 'react-native';
 import { notaDefault } from '../../templates/doacao';
 import { button } from '../doar/styles';
 import { useSettings } from '../../context/settings';
@@ -18,6 +18,7 @@ interface BilheteData {
   pooling: string;
   bilhete: string;
   sorteio: number;
+  tipo_rodada?: string;
   status: -1 | 0 | 1 | 2;
   comprado_em: string;
   valor_compra: number;
@@ -35,7 +36,7 @@ interface IRenderItem {
   item: BilheteData;
   loading: boolean;
   onPrint: (pooling: string) => Promise<void>;
-  onView: (pooling: string) => Promise<void>;
+  onView: (item: BilheteData) => Promise<void>;
   onShare: (pooling: string) => Promise<void>;
 }
 
@@ -56,7 +57,7 @@ const RenderItem: React.FC<IRenderItem> = ({ item, loading, onPrint, onView, onS
           }}
         >
           <Layout>
-            <Text>Sort: {item.sorteio || ''}</Text>
+            <Text>Sorteio: {item.sorteio || ''}</Text>
             {/* Nº: {item?.bilhete}{'\n'} */}
             <Text category="c1">
               Cartelas: {item?.cartelas?.[0] || '0000'} à {item?.cartelas?.[item?.cartelas?.length - 1] || '0000'}
@@ -70,20 +71,20 @@ const RenderItem: React.FC<IRenderItem> = ({ item, loading, onPrint, onView, onS
             }}
           >
             <Button
-              onPress={() => onView(item.bilhete)}
+              onPress={() => onView(item)}
               style={{ marginRight: 2 }}
-              disabled={true}
+              disabled={loading}
               accessoryLeft={() => <Ionicons style={{ color: '#fff' }} name="search" />}
             />
             <Button
-              onPress={() => onPrint(item.bilhete)}
+              onPress={() => onPrint(String(item.bilhete))}
               disabled={loading}
               style={{ marginRight: 2 }}
               accessoryLeft={() => <Ionicons style={{ color: '#fff' }} name="print" />}
             />
             {
               <Button
-                onPress={() => onShare(item.bilhete)}
+                onPress={() => onShare(String(item.bilhete))}
                 disabled={loading}
                 status="success"
                 accessoryLeft={() => <Ionicons style={{ color: '#fff' }} name="share-social" />}
@@ -101,6 +102,8 @@ const Historico = () => {
   const [loading, setLoading] = useState(false);
   const [pagina, setPagina] = useState<number>(1);
   const [maxPagina, setMaxPagina] = useState<number>(1);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedBilhete, setSelectedBilhete] = useState<BilheteData | null>(null);
   const { user, deviceInfo } = useAuth();
   const { driver: altDriver, serverName } = useSettings();
   const { currentPrinter } = usePrinter();
@@ -108,10 +111,10 @@ const Historico = () => {
 
   const userInfo = useMemo(
     () =>
-      ({
-        ...user,
-        ...deviceInfo
-      } as IUser & DeviceInfo),
+    ({
+      ...user,
+      ...deviceInfo
+    } as IUser & DeviceInfo),
     [deviceInfo, user]
   );
 
@@ -178,12 +181,15 @@ const Historico = () => {
     [altDriver, currentPrinter, user?.pos.id, userInfo]
   );
 
-  const handleView = useCallback(
-    async (code: string) => {
-      nav.navigate('Cartela', { code, backpage: 'Historico' });
-    },
-    [nav]
-  );
+  const handleView = useCallback((item: BilheteData) => {
+    setSelectedBilhete(item);
+    setModalVisible(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+    setSelectedBilhete(null);
+  }, []);
 
   const mountScreen = useCallback(() => {
     setBilhetes([]);
@@ -270,6 +276,116 @@ const Historico = () => {
             ))}
         </View>
       </Layout>
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleCloseModal}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <TouchableOpacity activeOpacity={1}>
+            <Card
+              disabled={true}
+              style={{
+                borderRadius: 12,
+              }}
+            >
+              <Layout style={{ marginBottom: 12 }}>
+                <Text category="h6">Detalhes do Bilhete</Text>
+                <Text category="c1">
+                  Bilhete: {selectedBilhete ? String(selectedBilhete.bilhete) : '-'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Sorteio</Text>
+                <Text>{selectedBilhete?.sorteio ?? '-'}</Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Tipo de rodada</Text>
+                <Text>{selectedBilhete?.tipo_rodada || '-'}</Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Compra</Text>
+                <Text>
+                  {selectedBilhete?.comprado_em
+                    ? moment(selectedBilhete.comprado_em).format('L - LTS')
+                    : '-'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Partida</Text>
+                <Text>
+                  {selectedBilhete?.data_partida
+                    ? moment(selectedBilhete.data_partida).format('L - LTS')
+                    : '-'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Quantidade</Text>
+                <Text>{selectedBilhete?.quantidade ?? '-'}</Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Valor da compra</Text>
+                <Text>
+                  {selectedBilhete?.valor_compra != null
+                    ? `R$ ${Number(selectedBilhete.valor_compra).toFixed(2)}`
+                    : '-'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Valor por cartela</Text>
+                <Text>
+                  {selectedBilhete?.valor_cartela != null
+                    ? `R$ ${Number(selectedBilhete.valor_cartela).toFixed(2)}`
+                    : '-'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 8 }}>
+                <Text category="s1">Premiações</Text>
+                <Text>
+                  Kuadra: R$ {selectedBilhete?.valor_kuadra != null ? Number(selectedBilhete.valor_kuadra).toFixed(2) : '0.00'}
+                </Text>
+                <Text>
+                  Kina: R$ {selectedBilhete?.valor_kina != null ? Number(selectedBilhete.valor_kina).toFixed(2) : '0.00'}
+                </Text>
+                <Text>
+                  Keno: R$ {selectedBilhete?.valor_keno != null ? Number(selectedBilhete.valor_keno).toFixed(2) : '0.00'}
+                </Text>
+              </Layout>
+
+              <Layout style={{ marginBottom: 12 }}>
+                <Text category="s1">Cartelas</Text>
+                <Text>
+                  {selectedBilhete?.cartelas?.length
+                    ? selectedBilhete.cartelas.join(', ')
+                    : '-'}
+                </Text>
+              </Layout>
+
+              <Button onPress={handleCloseModal} status="basic">
+                Fechar
+              </Button>
+            </Card>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </Layout>
   );
 };
