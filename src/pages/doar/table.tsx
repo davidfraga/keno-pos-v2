@@ -7,6 +7,9 @@ import { View } from 'react-native';
 import { sorteioColor } from '../../utils/sorteioColors';
 import { cronometroAntecipadoReverso, cronometroReverso } from './styles';
 import timerSort from './timesort';
+import CronometroSorteio from './CronometroSorteio';
+import CronometroAntecipado from './CronometroAntecipado';
+import { differenceInSeconds, addSeconds } from 'date-fns';
 
 const dateStyle = (d: boolean) => (d ? { fontWeight: 'bold' } : {});
 
@@ -15,6 +18,11 @@ const TableDoar: React.FC<{ selected: SorteioData | undefined; count: number }> 
   const boldAntecipado: any = selected ? dateStyle(selected.antecipado) : {};
   const tipo = selected?.tipo_rodada?.split(' ')[0];
   const color = sorteioColor(selected);
+
+  const isAntecipadoExpirado = selected?.hora_antecipado && selected?.datahora
+    ? differenceInSeconds(new Date(selected.hora_antecipado), addSeconds(new Date(selected.datahora), count)) < 0
+    : false;
+
   return (
     <>
       <DataTable style={{ marginTop: 15 }}>
@@ -25,7 +33,7 @@ const TableDoar: React.FC<{ selected: SorteioData | undefined; count: number }> 
             justifyContent: 'space-between'
           }}
         >
-          <Text style={{ textAlign: 'left' }}>{selected ? `Sorteio: ${selected?.codigo}` : ''}</Text>
+          <Text style={{ textAlign: 'left' }}>{selected ? `Sorteio: #${selected?.codigo}` : ''}</Text>
           <Text
             style={{
               flex: 1,
@@ -36,7 +44,7 @@ const TableDoar: React.FC<{ selected: SorteioData | undefined; count: number }> 
           >
             {selected ? `${tipo}` : ''}
           </Text>
-          <Text style={{ textAlign: 'right' }}>{selected && moment(selected?.data_partida).format('DD/MM - LT')}</Text>
+          <Text style={{ textAlign: 'right' }}>{selected && moment(selected?.data_partida).format('DD/MM LT')}</Text>
         </View>
         <DataTable.Header>
           <DataTable.Title style={{ justifyContent: 'center' }}>KUADRA</DataTable.Title>
@@ -81,22 +89,18 @@ const TableDoar: React.FC<{ selected: SorteioData | undefined; count: number }> 
           {selected !== undefined ? (
             <>
               <DataTable.Cell style={{ justifyContent: 'center' }}>
-                <Text style={{ color: 'green', fontWeight: 'bold' }}>{selected.valor_antecipado?.toFixed(2)}</Text>
+                <Text style={{ color: 'red' }}>
+                  {isAntecipadoExpirado ? 'Encerrado' : selected.valor_antecipado?.toFixed(2)}
+                </Text>
               </DataTable.Cell>
               <DataTable.Cell style={{ justifyContent: 'center' }}>
-                {
-                  <Text style={cronometroAntecipadoReverso}>
-                    {selected.hora_antecipado
-                      ? timerSort(
-                          new Date(selected.hora_antecipado),
-                          new Date(selected.datahora),
-                          count,
-                          false,
-                          selected
-                        )
-                      : '...'}
-                  </Text>
-                }
+                <Text>
+                  <CronometroAntecipado
+                    style={cronometroAntecipadoReverso}
+                    targetDate={selected.hora_antecipado ? new Date(selected.hora_antecipado) : undefined}
+                    serverDate={selected.datahora ? new Date(selected.datahora) : undefined}
+                  />
+                </Text>
               </DataTable.Cell>
               <DataTable.Cell style={{ justifyContent: 'center' }}>
                 <Text style={boldOnDate}>{selected.valor_dia?.toFixed(2)}</Text>

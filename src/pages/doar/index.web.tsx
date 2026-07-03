@@ -43,7 +43,7 @@ import { useSettings } from '../../context/settings';
 import moment from 'moment';
 import { fontTableTitle, tableTitle, tableTitle2 } from '../../components/Table/styles';
 import { useInterval } from '../../utils/useInterval';
-import timerSort from './timesort';
+import CronometroSorteio from './CronometroSorteio';
 import {
   compartilharMsg,
   compartilharMsgNovamente,
@@ -53,7 +53,7 @@ import {
 
 const formatSorteioTitle = (data?: SorteioData) => {
   if (data)
-    return `${data.tipo_rodada?.split(' ')[0]} #${data.codigo} - ${moment(data.data_partida).format('L - LT')} - ${data.valor_keno
+    return `${data.tipo_rodada ? data.tipo_rodada[0] : ""} #${data.codigo} (${moment(data.data_partida).format('L - LT')}) - ${data.valor_keno?.toFixed(2)
       }`;
   else return '';
 };
@@ -506,6 +506,7 @@ const Doar: React.FC = () => {
               borderRadius: 15
             }}
           >
+            {/*@ts-ignore
             <Input
               placeholder="Digite o código do seu sorteio"
               style={search}
@@ -515,6 +516,7 @@ const Doar: React.FC = () => {
             <Button onPress={() => handlePreModal(true)} style={buttonPreCompra}>
               Pré Compra
             </Button>
+            */}
             {/* @ts-ignore */}
             <select
               value={selSortIndex !== undefined ? selSortIndex : ""}
@@ -545,17 +547,17 @@ const Doar: React.FC = () => {
               {/* @ts-ignore */}
             </select>
             <Text style={campoTempo}>
-              <Text style={textCronometro}>Sorteio Começa em: </Text>
-              <Text style={cronometroReverso}>
-                {sorteios.length > 0 && selSortIndex != undefined && selSortIndex >= 0
-                  ? timerSort(
-                    new Date(sorteios[selSortIndex || 0].data_partida),
-                    new Date(sorteios[selSortIndex || 0].datahora),
-                    count,
-                    true
-                  )
-                  : ''}
-              </Text>
+              <Text style={textCronometro}>Sorteio Previsto em: </Text>
+              {sorteios.length > 0 && selSortIndex != undefined && selSortIndex >= 0 ? (
+                <CronometroSorteio
+                  style={cronometroReverso}
+                  dataSort={new Date(sorteios[selSortIndex || 0].data_partida)}
+                  dataServer={new Date(sorteios[selSortIndex || 0].datahora)}
+                  antecipado={true}
+                />
+              ) : (
+                <Text style={cronometroReverso}></Text>
+              )}
             </Text>
             <TableDoar selected={sorteioSelecionado} count={count} />
             <Layout style={contador}>
